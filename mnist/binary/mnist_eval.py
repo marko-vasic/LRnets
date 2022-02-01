@@ -13,7 +13,7 @@ import mnist
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('eval_dir', '/home/oran/logdir/mnist_eval',
+tf.app.flags.DEFINE_string('eval_dir', '/home/vasic/Downloads/LRnets/mnist_eval',
                            """Directory where to write event logs.""")
 tf.app.flags.DEFINE_string('eval_data', 'test',
                            """Either 'test' or 'train_eval'.""")

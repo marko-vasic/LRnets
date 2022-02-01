@@ -17,12 +17,12 @@ FLAGS = tf.app.flags.FLAGS
 
 # Basic model parameters.
 tf.app.flags.DEFINE_integer('batch_size', 256,"""Number of images to process in a batch.""")
-tf.app.flags.DEFINE_string('data_dir', '/home/oran/logdir/mnist_data',"""Path to the CIFAR-10 data directory.""")
-tf.app.flags.DEFINE_string('hot_start_dir', '/home/oran/logdir/mnist_full_precision',"""Path to the CIFAR-10 data directory.""")
+tf.app.flags.DEFINE_string('data_dir', '/home/vasic/Downloads/LRnets/mnist_data',"""Path to the CIFAR-10 data directory.""")
+tf.app.flags.DEFINE_string('hot_start_dir', '/home/vasic/Downloads/LRnets/mnist_full_precision',"""Path to the CIFAR-10 data directory.""")
 tf.app.flags.DEFINE_float('wd', 1e-6,"""Number of images to process in a batch.""")
 tf.app.flags.DEFINE_float('wd_weights', 0.0001,"""Number of images to process in a batch.""")
 tf.app.flags.DEFINE_float('dropout', 0.5,"""Dropout rate.""")
-tf.app.flags.DEFINE_boolean('hot_start', True,"""Whether this is a new run or not.""")
+tf.app.flags.DEFINE_boolean('hot_start', False, """Whether this is a new run or not.""")
 tf.app.flags.DEFINE_float('learning_rate', 0.01,"""Whether this is a new run or not.""")
 tf.app.flags.DEFINE_float('lr_decay_epochs', 100,"""Whether this is a new run or not.""")
 tf.app.flags.DEFINE_boolean('first_layer_ternary', True,"""Whether the first layer  or not.""")
@@ -280,4 +280,3 @@ def _add_loss_summaries(total_loss):
     tf.summary.scalar(l.op.name, loss_averages.average(l))
 
   return loss_averages_op
-
