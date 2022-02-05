@@ -15,27 +15,12 @@ import iris_input
 import iris_eval
 import os
 
+from iris_flags import *
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Learning rate decay factor.
 LEARNING_RATE_DECAY_FACTOR = 0.316227766  # This is sqrt(1/10)
-
-FLAGS = tf.app.flags.FLAGS
-
-tf.app.flags.DEFINE_string('train_dir',
-                           os.path.expanduser('~/Downloads/LRnets/iris_train'),
-                           "Directory where to write event logs and checkpoint.")
-tf.app.flags.DEFINE_integer('epochs', 1000, "Number of epochs to run.")
-tf.app.flags.DEFINE_integer('num_gpus', 1, "How many GPUs to use.")
-tf.app.flags.DEFINE_boolean('log_device_placement', False,
-                            "Whether to log device placement.")
-tf.app.flags.DEFINE_boolean('new_run', True,
-                            "Whether this is a new run or not.")
-tf.app.flags.DEFINE_float('learning_rate', 0.01,
-                          "Starting learning rate.")
-tf.app.flags.DEFINE_float('lr_decay_epochs', 500,
-                          """Number of training epochs upon 
-                          which learning rate is adjusted.""")
 
 
 def save_training_params():
@@ -231,7 +216,7 @@ def train():
 
             assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
-            if step % 10 == 0:
+            if step % 100 == 0:
                 num_examples_per_step = FLAGS.batch_size * FLAGS.num_gpus
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = duration / FLAGS.num_gpus
@@ -242,18 +227,17 @@ def train():
                 print(format_str % (datetime.now(), step, loss_value,
                                     examples_per_sec, sec_per_batch))
 
-            if step % 10 == 0:
+            if step % 100 == 0:
                 summary_str = sess.run(summary_op,
                                        feed_dict={images: image_batch,
                                                   labels: label_batch})
                 summary_writer.add_summary(summary_str, step)
 
-            # Save the model checkpoint periodically.
-            if step % 20 == 0 or (step + 1) == max_steps:
+            if (step % 400 == 0) or (step + 1) == max_steps:
+                # Save the model checkpoint periodically.
                 checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=step)
 
-            if (step % 40 == 0):
                 precision = []
                 for i in xrange(7):
                     iris.draw_weights(sess)
@@ -262,11 +246,19 @@ def train():
                         best_precision = precision[i]
                         os.system(
                             'cp ' + FLAGS.train_dir + '/weights/* ' + FLAGS.train_dir + '/best_weights/')
+                        os.system(
+                            'rm ' + FLAGS.train_dir + '/best_weights/model.ckpt*'
+                        )
+                        os.system(
+                            'cp ' + os.path.join(FLAGS.train_dir, 'model.ckpt-{}*'.format(step))
+                            + ' ' + FLAGS.train_dir + '/best_weights/'
+                        )
                 print('Average precision: ' + str(round(np.mean(precision), 3)))
                 f.write('step: ' + str(step) + ', average precision = ' + str(
                     round(np.mean(precision), 3)) + '\n')
 
         f.write('best precision = ' + str(round(best_precision, 3)) + '\n')
+        print('Best precision: ' + str(round(best_precision, 3)))
         f.close()
 
 

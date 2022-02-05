@@ -2,31 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import re
 
 import tensorflow as tf
 import numpy as np
 
 import iris_input
-
-FLAGS = tf.app.flags.FLAGS
-
-# Basic model parameters.
-tf.app.flags.DEFINE_integer('batch_size', 150,
-                            """Number of images to process in a batch.""")
-tf.app.flags.DEFINE_string('hot_start_dir',
-                           os.path.expanduser('~/Downloads/LRnets/iris_full_precision'),
-                           """Path to the CIFAR-10 data directory.""")
-tf.app.flags.DEFINE_float('wd', 1e-6,
-                          """Number of images to process in a batch.""")
-tf.app.flags.DEFINE_float('wd_weights', 0.0001,
-                          """Number of images to process in a batch.""")
-tf.app.flags.DEFINE_float('dropout', 0.5, """Dropout rate.""")
-tf.app.flags.DEFINE_boolean('hot_start', False,
-                            """Whether this is a new run or not.""")
-tf.app.flags.DEFINE_boolean('first_layer_ternary', True,
-                            """Whether the first layer  or not.""")
+from iris_flags import *
 
 INPUT_SIZE = iris_input.INPUT_SIZE
 NUM_CLASSES = iris_input.NUM_CLASSES

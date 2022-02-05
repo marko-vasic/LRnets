@@ -14,20 +14,7 @@ import tensorflow as tf
 import iris
 import iris_input
 
-FLAGS = tf.app.flags.FLAGS
-
-tf.app.flags.DEFINE_string('eval_dir',
-                           os.path.join(str(Path.home()),
-                                        'Downloads/LRnets/iris_eval'),
-                           """Directory where to write event logs.""")
-tf.app.flags.DEFINE_string('eval_data', 'test',
-                           """Either 'test' or 'train_eval'.""")
-tf.app.flags.DEFINE_integer('eval_interval_secs', 60 * 5,
-                            """How often to run the eval.""")
-tf.app.flags.DEFINE_integer('num_examples', 150,
-                            """Number of examples to run.""")
-tf.app.flags.DEFINE_boolean('run_once', True,
-                            """Whether to run eval only once.""")
+from iris_flags import *
 
 
 def eval_once(saver, summary_writer,
@@ -113,12 +100,61 @@ def evaluate():
     return precision
 
 
+def evaluate_best():
+    with tf.Graph().as_default() as g:
+        dataset = iris_input.Iris()
+        images = tf.placeholder(tf.float32,
+                                [FLAGS.batch_size, iris_input.INPUT_SIZE])
+        labels = tf.placeholder(tf.int64, [FLAGS.batch_size])
+
+        # Build a Graph that computes the logits predictions from the
+        # inference model.
+        W_fc1 = tf.placeholder(tf.float32, [iris_input.INPUT_SIZE, 4])
+        W_fc2 = tf.placeholder(tf.float32, [4, 4])
+        W_fc3 = tf.placeholder(tf.float32, [4, 3])
+        weights = [W_fc1, W_fc2, W_fc3]
+        logits = iris.inference(images, weights)
+
+        # Calculate predictions.
+        top_k_op = tf.nn.in_top_k(logits, labels, 1)
+
+        saver = tf.train.Saver()
+
+        with tf.Session() as sess:
+            ckpt_path = FLAGS.train_dir + '/best_weights/model.ckpt-79'
+            saver.restore(sess, ckpt_path)
+
+            num_iter = int(math.ceil(FLAGS.num_examples / FLAGS.batch_size))
+            true_count = 0  # Counts the number of correct predictions.
+            total_sample_count = num_iter * FLAGS.batch_size
+            step = 0
+            W_fc1_ = np.load(FLAGS.train_dir + '/best_weights/W_fc1.npy')
+            W_fc2_ = np.load(FLAGS.train_dir + '/best_weights/W_fc2.npy')
+            W_fc3_ = np.load(FLAGS.train_dir + '/best_weights/W_fc3.npy')
+            while step < num_iter:
+                image_batch, label_batch = dataset.get_batch()
+                predictions = sess.run([top_k_op],
+                                       feed_dict={W_fc1: W_fc1_,
+                                                  W_fc2: W_fc2_,
+                                                  W_fc3: W_fc3_,
+                                                  images: image_batch,
+                                                  labels: label_batch})
+                true_count += np.sum(predictions)
+                step += 1
+
+            # Compute precision @ 1.
+            precision = true_count / total_sample_count
+
+        print(precision)
+
+
 def main(argv=None):  # pylint: disable=unused-argument
-    mnist.maybe_download_and_extract()
-    if tf.gfile.Exists(FLAGS.eval_dir):
-        tf.gfile.DeleteRecursively(FLAGS.eval_dir)
-    tf.gfile.MakeDirs(FLAGS.eval_dir)
-    evaluate()
+    # mnist.maybe_download_and_extract()
+    # if tf.gfile.Exists(FLAGS.eval_dir):
+    #     tf.gfile.DeleteRecursively(FLAGS.eval_dir)
+    # tf.gfile.MakeDirs(FLAGS.eval_dir)
+    # evaluate()
+    evaluate_best()
 
 
 if __name__ == '__main__':
